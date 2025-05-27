@@ -4,7 +4,7 @@ const campaignSchema = Joi.object({
   name: Joi.string().required(),
   segmentRules: Joi.array().items(Joi.object()).required(),
   message: Joi.string().required(),
-  // Add more fields as needed
+  customerIds: Joi.array().items(Joi.string()).required()
 });
 
 function validateCampaign(req, res, next) {

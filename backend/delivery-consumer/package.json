@@ -4,6 +4,7 @@
   "main": "src/consumer.js",
   "dependencies": {
     "amqplib": "^0.10.3",
+    "axios": "^1.9.0",
     "mysql2": "^3.9.7"
   },
   "scripts": {

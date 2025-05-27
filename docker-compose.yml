@@ -1,0 +1,78 @@
+version: '3.8'
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: xeno_crm
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  api-gateway:
+    build: ./backend/api-gateway
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=xeno_crm
+      - JWT_SECRET=your_jwt_secret
+    depends_on:
+      - rabbitmq
+      - mysql
+    ports:
+      - "3001:3001"
+
+  ingestion-consumer:
+    build: ./backend/ingestion-consumer
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=xeno_crm
+    depends_on:
+      - rabbitmq
+      - mysql
+
+  delivery-consumer:
+    build: ./backend/delivery-consumer
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=xeno_crm
+      - VENDOR_API_URL=http://vendor-simulator:4000/send
+    depends_on:
+      - rabbitmq
+      - mysql
+      - vendor-simulator
+
+  vendor-simulator:
+    build: ./backend/vendor-simulator/src
+    environment:
+      - API_GATEWAY_URL=http://api-gateway:3001/delivery-receipts
+    ports:
+      - "4000:4000"
+    depends_on:
+      - api-gateway
+
+  auth-service:
+    build: ./backend/auth-service
+    environment:
+      - GOOGLE_CLIENT_ID=your-google-client-id
+      - GOOGLE_CLIENT_SECRET=your-google-client-secret
+      - GOOGLE_CALLBACK_URL=http://localhost:5000/auth/google/callback
+      - JWT_SECRET=your_jwt_secret
+      - FRONTEND_URL=http://localhost:3000
+    ports:
+      - "5000:5000"

@@ -1,0 +1,187 @@
+openapi: 3.0.0
+info:
+  title: Xeno CRM API
+  version: 1.0.0
+  description: |
+    API Gateway for Xeno CRM. All endpoints require JWT authentication except /health.
+servers:
+  - url: http://localhost:3001
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Customer:
+      type: object
+      required: [name, email]
+      properties:
+        name:
+          type: string
+          example: Mohit Sharma
+        email:
+          type: string
+          format: email
+          example: mohit@example.com
+        phone:
+          type: string
+          example: "+919999999999"
+    Order:
+      type: object
+      required: [orderId, customerId, amount, date]
+      properties:
+        orderId:
+          type: string
+          example: ORD123
+        customerId:
+          type: string
+          example: CUST456
+        amount:
+          type: number
+          example: 1200.50
+        date:
+          type: string
+          format: date-time
+          example: "2024-05-27T10:00:00Z"
+    Campaign:
+      type: object
+      required: [name, segmentRules, message]
+      properties:
+        name:
+          type: string
+          example: "Summer Sale"
+        segmentRules:
+          type: array
+          items:
+            type: object
+          example: [{ "field": "spend", "op": ">", "value": 10000 }]
+        message:
+          type: string
+          example: "Hi Mohit, here’s 10% off…"
+    DeliveryReceipt:
+      type: object
+      required: [campaignId, customerId, status, timestamp]
+      properties:
+        campaignId:
+          type: string
+          example: "CMP123"
+        customerId:
+          type: string
+          example: "CUST456"
+        status:
+          type: string
+          enum: [sent, failed]
+          example: "sent"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-05-27T10:05:00Z"
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+paths:
+  /customers:
+    post:
+      summary: Ingest customer data
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+      responses:
+        '202':
+          description: Accepted
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+  /orders:
+    post:
+      summary: Ingest order data
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+      responses:
+        '202':
+          description: Accepted
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+  /campaigns:
+    post:
+      summary: Create campaign
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Campaign'
+      responses:
+        '202':
+          description: Accepted
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+  /delivery-receipts:
+    post:
+      summary: Accept delivery receipt
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryReceipt'
+      responses:
+        '202':
+          description: Accepted
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK

@@ -1,0 +1,25 @@
+# Node modules
+**/node_modules/
+**/npm-debug.log
+**/yarn-error.log
+
+# Logs
+**/logs
+**/*.log
+
+# dotenv environment files
+**/.env
+**/.env.*
+
+# Mac system files
+.DS_Store
+
+# Docker
+**/dist/
+**/build/
+**/coverage/
+**/tmp/
+**/.docker/
+
+# VS Code
+.vscode/

@@ -72,3 +72,8 @@ services:
       - .env
     ports:
       - "5001:5000"
+        
+  ai-service:
+    build: ./ai-service
+    ports:
+      - "5002:5002"

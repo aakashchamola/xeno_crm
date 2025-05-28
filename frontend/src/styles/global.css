@@ -1,0 +1,56 @@
+body {
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #f9f9f9;
+  color: #222;
+  font-size: 18px;
+}
+input, select, button, textarea {
+  margin: 4px;
+  padding: 8px 12px;
+  font-size: 1rem;
+  border-radius: 4px;
+  border: 1px solid #bbb;
+}
+input:focus, select:focus, button:focus, textarea:focus {
+  outline: 2px solid #0070f3;
+  outline-offset: 2px;
+  border-color: #0070f3;
+}
+button {
+  cursor: pointer;
+  background: #0070f3;
+  color: #fff;
+  border: none;
+  transition: background 0.2s;
+}
+button:disabled {
+  background: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
+a {
+  color: #0070f3;
+  text-decoration: underline;
+}
+a:focus {
+  outline: 2px solid #0070f3;
+}
+label {
+  font-weight: 500;
+}
+[role="alert"] {
+  color: #b00020;
+  background: #fff0f0;
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+[role="status"] {
+  color: #006400;
+  background: #e6ffe6;
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}

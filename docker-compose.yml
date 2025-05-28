@@ -72,8 +72,18 @@ services:
       - .env
     ports:
       - "5001:5000"
-        
+    
   ai-service:
     build: ./ai-service
     ports:
       - "5002:5002"
+  frontend:
+    build: ./frontend
+    env_file:
+      - .env
+    ports:
+    - "3000:3000"
+    depends_on:
+    - api-gateway
+    - ai-service
+    - auth-service

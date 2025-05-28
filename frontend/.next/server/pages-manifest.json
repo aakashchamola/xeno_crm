@@ -1,0 +1,11 @@
+{
+  "/_app": "pages/_app.js",
+  "/_error": "pages/_error.js",
+  "/campaigns/new": "pages/campaigns/new.html",
+  "/campaigns/campaignDetailPage": "pages/campaigns/campaignDetailPage.html",
+  "/campaigns/campaignHistory": "pages/campaigns/campaignHistory.html",
+  "/auth/callback": "pages/auth/callback.html",
+  "/": "pages/index.html",
+  "/404": "pages/404.html",
+  "/_document": "pages/_document.js"
+}

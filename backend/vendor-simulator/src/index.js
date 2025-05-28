@@ -33,7 +33,12 @@ app.post('/send', async (req, res) => {
   res.json({ vendorStatus: status });
 });
 
-const PORT = process.env.PORT || 4000;
+app.get('/health', (req, res) => {
+  res.send('OK');
+});
+
+
+const PORT = process.env.PORT || 8005;
 app.listen(PORT, () => {
   console.log(`Vendor Simulator running on port ${PORT}`);
 });

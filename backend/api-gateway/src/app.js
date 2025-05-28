@@ -5,9 +5,22 @@ const swaggerUi = require('swagger-ui-express');
 const fs = require('fs');
 const path = require('path');
 const errorHandler = require('./middlewares/errorHandler');
+const mysql = require('mysql2/promise');
 dotenv.config();
+async function initDb() {
+  const db = await mysql.createConnection({
+    host: process.env.MYSQL_HOST || 'localhost',
+    user: process.env.MYSQL_USER || 'root',
+    password: process.env.MYSQL_PASSWORD || 'root',
+    database: process.env.MYSQL_DATABASE || 'xeno_crm',
+  });
+  return db;
+}
 
-const app = express();
+
+initDb().then(db => {
+  const app = express();
+  app.locals.db = db;
 app.use(cors());
 app.use(express.json());
 app.use(errorHandler);
@@ -27,8 +40,12 @@ app.use('/deliveryReceipts', require('./routes/deliveryReceipts'));
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
+  const PORT = process.env.PORT || 8002;
+  app.listen(PORT, () => {
+    console.log(`API Gateway running on port ${PORT}`);
+  });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`API Gateway running on port ${PORT}`);
+}).catch(err => {
+  console.error('Failed to connect to MySQL:', err);
+  process.exit(1);
 });

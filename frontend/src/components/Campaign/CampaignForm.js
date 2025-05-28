@@ -25,7 +25,7 @@ const [tags, setTags] = useState([]);
     try {
       const jwt = localStorage.getItem("jwt");
       const res = await axios.post(
-        `${API_URL}/campaigns/preview`,
+        `${API_URL}/preview`,
         { segmentRules: rules },
         { headers: { Authorization: `Bearer ${jwt}` } }
       );

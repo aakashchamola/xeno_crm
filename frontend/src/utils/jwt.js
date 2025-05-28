@@ -5,7 +5,7 @@ export function getUserFromJWT() {
   if (!jwt) return null;
   try {
     const user = jwtDecode(jwt);
-    // Check expiry
+    console.log("your token: " , localStorage.getItem('jwt'));
     if (user.exp && Date.now() / 1000 > user.exp) {
       localStorage.removeItem('jwt');
       localStorage.removeItem('user');

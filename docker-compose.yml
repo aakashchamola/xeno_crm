@@ -18,72 +18,69 @@ services:
 
   api-gateway:
     build: ./backend/api-gateway
-    environment:
-      - RABBITMQ_URL=amqp://rabbitmq
-      - MYSQL_HOST=mysql
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=root
-      - MYSQL_DATABASE=xeno_crm
-      - JWT_SECRET=your_jwt_secret
+    env_file:
+      - .env
     depends_on:
       - rabbitmq
       - mysql
     ports:
-      - "3002:3001"
+      - "8002:8002"
 
   ingestion-consumer:
     build: ./backend/ingestion-consumer
-    environment:
-      - RABBITMQ_URL=amqp://rabbitmq
-      - MYSQL_HOST=mysql
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=root
-      - MYSQL_DATABASE=xeno_crm
+    env_file:
+      - .env
     depends_on:
       - rabbitmq
       - mysql
+    restart: on-failure
 
   delivery-consumer:
     build: ./backend/delivery-consumer
-    environment:
-      - RABBITMQ_URL=amqp://rabbitmq
-      - MYSQL_HOST=mysql
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=root
-      - MYSQL_DATABASE=xeno_crm
-      - VENDOR_API_URL=http://vendor-simulator:4000/send
+    env_file:
+      - .env
     depends_on:
       - rabbitmq
       - mysql
       - vendor-simulator
+    restart: on-failure
 
   vendor-simulator:
     build: ./backend/vendor-simulator
-    environment:
-      - API_GATEWAY_URL=http://api-gateway:3001/delivery-receipts
+    env_file:
+      - .env
     ports:
-      - "4000:4000"
+      - "8005:8005"
     depends_on:
       - api-gateway
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   auth-service:
     build: ./backend/auth-service
     env_file:
       - .env
     ports:
-      - "5001:5000"
-    
+      - "8003:8003"
+
   ai-service:
     build: ./ai-service
     ports:
-      - "5002:5002"
+      - "8004:8004"
+
   frontend:
     build: ./frontend
     env_file:
       - .env
     ports:
-    - "3000:3000"
+      - "8001:3000"
+    volumes:
+      - ./frontend:/app
+    command: npm run dev
     depends_on:
-    - api-gateway
-    - ai-service
-    - auth-service
+      - api-gateway
+      - ai-service
+      - auth-service

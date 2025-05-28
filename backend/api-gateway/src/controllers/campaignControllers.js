@@ -8,5 +8,13 @@ async function createCampaign(req, res) {
     res.status(500).json({ error: 'Failed to enqueue campaign data.' });
   }
 }
+async function getCampaigns(req, res) {
+  try {
+    const [rows] = await req.app.locals.db.query('SELECT * FROM campaigns');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch campaigns.' });
+  }
+}
 
-module.exports = { createCampaign };
+module.exports = { createCampaign, getCampaigns };

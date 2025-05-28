@@ -16,7 +16,7 @@ app.use('/ai/lookalike', lookAlikeRouter);
 app.use('/ai/performance-summary', performanceSummaryRouter);
 app.use('/ai/suggest-send-time', suggestSendTimeRouter);
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
-const PORT = process.env.PORT || 5002;
+const PORT = process.env.PORT || 8004;
 app.listen(PORT, () => {
   console.log(`AI Service running on port ${PORT}`);
 });

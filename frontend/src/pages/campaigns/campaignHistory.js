@@ -14,9 +14,11 @@ export default function CampaignHistory() {
       setLoading(true);
       try {
         const jwt = localStorage.getItem('jwt');
+        console.log('Fetching campaigns with JWT:', jwt);
         const res = await axios.get(`${API_URL}/campaigns`, {
           headers: { Authorization: `Bearer ${jwt}` }
         });
+        console.log('API URL is:', API_URL);
         setCampaigns(
           (res.data || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         );
@@ -30,7 +32,6 @@ export default function CampaignHistory() {
   }, []);
 
   return (
-    <Layout>
       <RequireAuth>
         <section aria-label="Campaign History">
           <h2 tabIndex={0}>Campaign History</h2>
@@ -54,6 +55,5 @@ export default function CampaignHistory() {
           )}
         </section>
       </RequireAuth>
-    </Layout>
   );
 }

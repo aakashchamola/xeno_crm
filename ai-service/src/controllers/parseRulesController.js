@@ -9,7 +9,12 @@ function extractJsonArray(text) {
   const match = text.match(/\[.*?\]/s);
   if (!match) return null;
   try {
-    return JSON.parse(match[0]);
+    const arr = JSON.parse(match[0]);
+    // Ensure it's an array of objects with field/op/value
+    if (Array.isArray(arr) && arr.every(r => r.field && r.op && r.value !== undefined)) {
+      return arr;
+    }
+    return null;
   } catch {
     return null;
   }
@@ -21,7 +26,6 @@ export async function parseRules(req, res) {
 
   while (!generator) await new Promise(r => setTimeout(r, 100));
 
-  // Improved prompt for structured output
   const fullPrompt = `Convert this segment description to JSON rules: "${prompt}". Output only a JSON array of rule objects like: [{"field":"last_purchase_date","op":"<","value":"2023-12-01"},{"field":"spend","op":">","value":5000}]`;
 
   try {

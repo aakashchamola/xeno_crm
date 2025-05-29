@@ -16,5 +16,15 @@ async function getCampaigns(req, res) {
     res.status(500).json({ error: 'Failed to fetch campaigns.' });
   }
 }
+async function getCampaignById(req, res) {
+  try {
+    const [rows] = await req.app.locals.db.query('SELECT * FROM campaigns WHERE id = ?', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Campaign not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch campaign.' });
+  }
+}
 
-module.exports = { createCampaign, getCampaigns };
+module.exports = { createCampaign, getCampaigns, getCampaignById };
+

@@ -32,7 +32,6 @@ export default function CampaignDetail() {
   }, [id, API_URL]);
 
   return (
-    <Layout>
       <RequireAuth>
         <section aria-label="Campaign Detail">
           {loading && <div role="status">Loading...</div>}
@@ -50,6 +49,5 @@ export default function CampaignDetail() {
           )}
         </section>
       </RequireAuth>
-    </Layout>
   );
 }

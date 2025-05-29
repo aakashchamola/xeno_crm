@@ -4,7 +4,7 @@ const axios = require('axios');
 const app = express();
 app.use(express.json());
 
-const API_GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://api-gateway:3001/delivery-receipts';
+const API_GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://api-gateway:8002/delivery-receipts';
 
 app.post('/send', async (req, res) => {
   const { campaignId, customerId, message } = req.body;

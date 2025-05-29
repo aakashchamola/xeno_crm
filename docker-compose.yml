@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   rabbitmq:
     image: rabbitmq:3-management
@@ -20,6 +19,7 @@ services:
     build: ./backend/api-gateway
     env_file:
       - .env
+    restart: always
     depends_on:
       - rabbitmq
       - mysql

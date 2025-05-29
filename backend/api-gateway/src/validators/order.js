@@ -2,10 +2,9 @@ const Joi = require('joi');
 
 const orderSchema = Joi.object({
   orderId: Joi.string().required(),
-  customerId: Joi.string().required(),
+customerId: Joi.alternatives().try(Joi.string(), Joi.number()).required(),
   amount: Joi.number().required(),
   date: Joi.date().required(),
-  // Add more fields as needed
 });
 
 function validateOrder(req, res, next) {

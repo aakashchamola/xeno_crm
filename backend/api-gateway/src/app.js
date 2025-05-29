@@ -37,7 +37,7 @@ app.use('/customers', require('./routes/customers'));
 app.use('/orders', require('./routes/orders'));
 app.use('/campaigns', require('./routes/campaigns'));
 app.use('/deliveryReceipts', require('./routes/deliveryReceipts'));
-
+app.use('/preview', require('./routes/previews'));
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
   const PORT = process.env.PORT || 8002;

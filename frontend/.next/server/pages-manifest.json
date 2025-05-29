@@ -2,8 +2,7 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/campaigns/new": "pages/campaigns/new.js",
   "/campaigns": "pages/campaigns.js",
-  "/": "pages/index.js",
-  "/auth/callback": "pages/auth/callback.js"
+  "/campaigns/new": "pages/campaigns/new.js",
+  "/campaigns/[id]": "pages/campaigns/[id].js"
 }

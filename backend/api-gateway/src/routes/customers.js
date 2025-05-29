@@ -1,14 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const { validateCustomer } = require('../validators/customer');
+const  {validateCustomer }= require('../validators/customer');
 const { authenticateJWT } = require('../middlewares/authenticate');
-const { createCustomer } = require('../controllers/customersController');
+const { createCustomer, getCustomers } = require('../controllers/customersController');
+
 
 router.post(
   '/',
   authenticateJWT,
   validateCustomer,
   createCustomer
+);
+router.get(
+  '/',
+  authenticateJWT,
+  getCustomers
 );
 
 module.exports = router;

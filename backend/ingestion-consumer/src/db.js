@@ -11,18 +11,32 @@ const pool = mysql.createPool({
 });
 
 async function saveCustomer(customer) {
-  const { name, email, phone } = customer;
+  // Accepts: { name, email, phone, spend, visits, last_active }
+  const { name, email, phone, spend = 0, visits = 0, last_active = null } = customer;
   await pool.query(
-    'INSERT INTO customers (name, email, phone) VALUES (?, ?, ?)',
-    [name, email, phone || null]
+    'INSERT INTO customers (name, email, phone, spend, visits, last_active) VALUES (?, ?, ?, ?, ?, ?)',
+    [name, email, phone || null, spend, visits, last_active]
   );
 }
 
 async function saveOrder(order) {
+  // Accepts: { orderId, customerId, amount, date }
   const { orderId, customerId, amount, date } = order;
+
+  // Robust conversion to MySQL DATETIME format
+  let mysqlDate = date;
+  if (typeof date === 'string') {
+    const d = new Date(date);
+    if (!isNaN(d)) {
+      // Pad function for 2-digit numbers
+      const pad = n => n < 10 ? '0' + n : n;
+      mysqlDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+  }
+
   await pool.query(
     'INSERT INTO orders (order_id, customer_id, amount, date) VALUES (?, ?, ?, ?)',
-    [orderId, customerId, amount, date]
+    [orderId, customerId, amount, mysqlDate]
   );
 }
 

@@ -13,7 +13,12 @@ export async function lookalike(req, res) {
     const match = output[0].generated_text.match(/\[.*?\]/s);
     let lookalike = [];
     if (match) {
-      try { lookalike = JSON.parse(match[0]); } catch {}
+      try {
+        const arr = JSON.parse(match[0]);
+        if (Array.isArray(arr) && arr.every(r => r.field && r.op && r.value !== undefined)) {
+          lookalike = arr;
+        }
+      } catch {}
     }
     res.json({ lookalike });
   } catch (err) {

@@ -8,5 +8,12 @@ async function createCustomer(req, res) {
     res.status(500).json({ error: 'Failed to enqueue customer data.' });
   }
 }
-
-module.exports = { createCustomer };
+async function getCustomers(req, res) {
+  try {
+    const [rows] = await req.app.locals.db.query('SELECT * FROM customers');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch customers.' });
+  }
+}
+module.exports = { createCustomer, getCustomers };

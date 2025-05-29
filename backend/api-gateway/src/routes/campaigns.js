@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { validateCampaign } = require('../validators/campaign');
 const { authenticateJWT } = require('../middlewares/authenticate');
-const { createCampaign, getCampaigns } = require('../controllers/campaignControllers');
+const { createCampaign, getCampaigns, getCampaignById } = require('../controllers/campaignControllers');
 
 router.post(
   '/',
@@ -16,5 +16,7 @@ router.get(
   authenticateJWT,
   getCampaigns
 );
+
+router.get('/:id', authenticateJWT, getCampaignById);
 
 module.exports = router;

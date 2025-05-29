@@ -8,5 +8,13 @@ async function createOrder(req, res) {
     res.status(500).json({ error: 'Failed to enqueue order data.' });
   }
 }
+async function getOrders(req, res) {
+  try {
+    const [rows] = await req.app.locals.db.query('SELECT * FROM orders');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch orders.' });
+  }
+}
 
-module.exports = { createOrder };
+module.exports = { createOrder, getOrders };

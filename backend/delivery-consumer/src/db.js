@@ -10,19 +10,17 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
-async function saveCommunicationLog(campaign) {
-  // Example: Insert a new campaign log (expand as needed)
+async function saveCommunicationLog({ campaign_id, customer_id, message, status = 'sent' }) {
   await pool.query(
-    'INSERT INTO communication_log (campaign_id, message, created_at) VALUES (?, ?, NOW())',
-    [campaign.id || null, campaign.message]
+    'INSERT INTO communication_log (campaign_id, customer_id, message, status, created_at) VALUES (?, ?, ?, ?, NOW())',
+    [campaign_id, customer_id, message, status]
   );
 }
 
-async function updateDeliveryStatus(receipt) {
-  // Example: Update delivery status (expand as needed)
+async function updateDeliveryStatus({ campaign_id, customer_id, status }) {
   await pool.query(
     'UPDATE communication_log SET status = ? WHERE campaign_id = ? AND customer_id = ?',
-    [receipt.status, receipt.campaignId, receipt.customerId]
+    [status, campaign_id, customer_id]
   );
 }
 

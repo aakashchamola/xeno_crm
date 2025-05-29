@@ -5,7 +5,8 @@ import axios from "axios";
 export default function CampaignForm({ onCreated }) {
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
-const [rules, setRules] = useState({ combinator: 'and', rules: [] });
+  // Always keep rules as an object with .rules array
+  const [rules, setRules] = useState({ combinator: 'and', rules: [] });
   const [aiPrompt, setAiPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -15,55 +16,70 @@ const [rules, setRules] = useState({ combinator: 'and', rules: [] });
   const AI_URL = process.env.NEXT_PUBLIC_AI_URL;
   const [messageSuggestions, setMessageSuggestions] = useState([]);
   const [suggestedTime, setSuggestedTime] = useState('');
-const [lookalike, setLookalike] = useState([]);
-const [tags, setTags] = useState([]);
+  const [lookalike, setLookalike] = useState([]);
+  const [tags, setTags] = useState([]);
 
-  const handlePreview = async () => {
+
+function mapRulesForBackend(rulesObj) {
+  return {
+    combinator: rulesObj.combinator,
+    rules: rulesObj.rules.map(r => ({
+      field: r.field,
+      op: r.op || r.operator || '=',
+      value: r.value
+    })),
+  };
+}
+
+const handlePreview = async () => {
+  setLoading(true);
+  setError("");
+  setSuccess("");
+  try {
+    const jwt = localStorage.getItem("jwt");
+    const mappedRules = mapRulesForBackend(rules);
+    const res = await axios.post(
+      `${API_URL}/preview`,
+      { segmentRules: mappedRules },
+      { headers: { Authorization: `Bearer ${jwt}` } }
+    );
+    setPreviewCount(res.data.count);
+  } catch (err) {
+    setError("Failed to preview segment");
+  }
+  setLoading(false);
+};
+
+  const handleLookalike = async () => {
     setLoading(true);
-    setError("");
-    setSuccess("");
+    setError('');
     try {
-      const jwt = localStorage.getItem("jwt");
-      const res = await axios.post(
-        `${API_URL}/preview`,
-        { segmentRules: rules },
-        { headers: { Authorization: `Bearer ${jwt}` } }
-      );
-      setPreviewCount(res.data.count);
+      const res = await axios.post(`${AI_URL}/ai/lookalike`, { segmentRules: rules });
+      setLookalike(res.data.lookalike || []);
     } catch (err) {
-      setError("Failed to preview segment");
+      setError('Failed to get lookalike segment');
     }
     setLoading(false);
   };
-const handleLookalike = async () => {
-  setLoading(true);
-  setError('');
-  try {
-    const res = await axios.post(`${AI_URL}/ai/lookalike`, { segmentRules: rules });
-    setLookalike(res.data.lookalike || []);
-  } catch (err) {
-    setError('Failed to get lookalike segment');
-  }
-  setLoading(false);
-};
 
-const handleAutoTag = async () => {
-  setLoading(true);
-  setError('');
-  try {
-    const res = await axios.post(`${AI_URL}/ai/auto-tag`, { campaignName: name, message });
-    setTags(res.data.tags || []);
-  } catch (err) {
-    setError('Failed to get tags');
-  }
-  setLoading(false);
-};
+  const handleAutoTag = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await axios.post(`${AI_URL}/ai/auto-tag`, { campaignName: name, message });
+      setTags(res.data.tags || []);
+    } catch (err) {
+      setError('Failed to get tags');
+    }
+    setLoading(false);
+  };
+
 const handleSuggestTime = async () => {
   setLoading(true);
   setError('');
   try {
     const res = await axios.post(`${AI_URL}/ai/suggest-send-time`, {
-      segmentRules: rules,
+      campaignName: name, 
     });
     setSuggestedTime(res.data.suggestedTime);
   } catch (err) {
@@ -71,20 +87,22 @@ const handleSuggestTime = async () => {
   }
   setLoading(false);
 };
-const handleMessageAI = async () => {
-  setLoading(true);
-  setError('');
-  try {
-    const res = await axios.post(`${AI_URL}/ai/suggest-message`, {
-      segmentRules: rules,
-      campaignName: name,
-    });
-    setMessageSuggestions(res.data.suggestions || []);
-  } catch (err) {
-    setError('Failed to get message suggestions');
-  }
-  setLoading(false);
-};
+
+  const handleMessageAI = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await axios.post(`${AI_URL}/ai/suggest-message`, {
+        segmentRules: rules,
+        campaignName: name,
+      });
+      setMessageSuggestions(res.data.suggestions || []);
+    } catch (err) {
+      setError('Failed to get message suggestions');
+    }
+    setLoading(false);
+  };
+
   const handleAIGenerate = async () => {
     setLoading(true);
     setError("");
@@ -93,7 +111,11 @@ const handleMessageAI = async () => {
       const res = await axios.post(`${AI_URL}/ai/parse-rules`, {
         prompt: aiPrompt,
       });
-      setRules(res.data.rules || []);
+      // Always set as an object with .rules
+      setRules({
+        combinator: 'and',
+        rules: res.data.rules || []
+      });
     } catch (err) {
       setError("AI service error");
     }
@@ -107,9 +129,10 @@ const handleMessageAI = async () => {
     setSuccess("");
     try {
       const jwt = localStorage.getItem("jwt");
+      // Send segmentRules as rules.rules array, and add customerIds as required by backend
       await axios.post(
         `${API_URL}/campaigns`,
-        { name, message, segmentRules: rules },
+        { name, message, segmentRules: rules.rules, customerIds: [] },
         { headers: { Authorization: `Bearer ${jwt}` } }
       );
       setSuccess("Campaign created!");
@@ -119,6 +142,7 @@ const handleMessageAI = async () => {
     }
     setLoading(false);
   };
+
   return (
     <form onSubmit={handleSubmit} aria-label="Create Campaign Form">
       <h2 tabIndex={0}>Create Campaign</h2>
@@ -167,7 +191,7 @@ const handleMessageAI = async () => {
       <button
         type="button"
         onClick={handlePreview}
-        disabled={loading || !rules.length}
+        disabled={loading || !rules || !Array.isArray(rules.rules) || !rules.rules.length}
         style={{ marginBottom: 8 }}
         aria-label="Preview Segment Size"
       >

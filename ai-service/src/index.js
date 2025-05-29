@@ -1,3 +1,6 @@
+import ort from 'onnxruntime-node';
+ort.env.logLevel = 'error';
+
 import express from 'express';
 import parseRulesRouter from './routes/parseRules.js';
 import suggestMessageRouter from './routes/suggestMessage.js';
@@ -5,10 +8,13 @@ import suggestSendTimeRouter from './routes/suggestSendTime.js';
 import performanceSummaryRouter from './routes/performanceSummary.js';
 import autoTaggingRouter from './routes/autoTagging.js';
 import lookAlikeRouter from './routes/lookAlike.js';
+import cors from 'cors';
+
 
 const app = express();
-app.use(express.json());
 
+app.use(express.json());
+app.use(cors());
 app.use('/ai/parse-rules', parseRulesRouter);
 app.use('/ai/suggest-message', suggestMessageRouter);
 app.use('/ai/auto-tag', autoTaggingRouter);

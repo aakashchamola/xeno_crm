@@ -26,13 +26,27 @@ export default function RuleBuilder({ rules, setRules }) {
           rules: [{ field: "spend", op: ">", value: 10000 }],
         };
 
+  // Ensure every rule has an op property
+  const handleQueryChange = (q) => {
+    const patched = {
+      ...q,
+      rules: Array.isArray(q.rules)
+        ? q.rules.map(r => ({
+            ...r,
+            op: r.op || r.operator || "="
+          }))
+        : []
+    };
+    setRules(patched);
+  };
+
   return (
     <section aria-label="Segment Rule Builder">
       <h4 tabIndex={0}>Segment Rules</h4>
       <QueryBuilder
         fields={fields}
         query={safeRules}
-        onQueryChange={q => setRules(q)}
+        onQueryChange={handleQueryChange}
         operators={operators}
         operatorKey="op"
         aria-label="Visual Rule Builder"

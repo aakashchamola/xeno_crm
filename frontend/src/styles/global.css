@@ -30,6 +30,10 @@ button:disabled {
   color: #666;
   cursor: not-allowed;
 }
+button:hover:not(:disabled), a:hover {
+  background: #005bb5;
+  color: #fff;
+}
 a {
   color: #0070f3;
   text-decoration: underline;
@@ -53,4 +57,17 @@ label {
   padding: 8px;
   border-radius: 4px;
   margin-bottom: 8px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+th, td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+th {
+  background: #f0f0f0;
 }

@@ -33,11 +33,11 @@ Description: "${prompt}"
       combinator: 'and',
       rules: arr.map(r => ({
         field: r.field || r.fact,
-        operator: r.op || r.operator,
+        op: r.op || r.operator,
         value: r.value,
       })),
     };
-    return res.json({ rules: ruleSet, originalPrompt: prompt });
+    return res.json({ rules: ruleSet.rules, combinator: ruleSet.combinator, originalPrompt: prompt });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Inference failed', details: err.message });

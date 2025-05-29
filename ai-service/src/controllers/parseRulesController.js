@@ -1,41 +1,45 @@
-import { pipeline } from '@xenova/transformers';
-
-let generator;
-(async () => {
-  generator = await pipeline('text-generation', 'Xenova/distilgpt2');
-})();
+import { generateWithGemini } from '../utils/aiClient.js';
 
 function extractJsonArray(text) {
-  const match = text.match(/\[.*?\]/s);
+  text = text.replace(/```json\s*/i, '').replace(/```/g, '').trim();
+  const match = text.match(/\[.*\]/s);
   if (!match) return null;
-  try {
-    const arr = JSON.parse(match[0]);
-    // Ensure it's an array of objects with field/op/value
-    if (Array.isArray(arr) && arr.every(r => r.field && r.op && r.value !== undefined)) {
-      return arr;
-    }
-    return null;
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(match[0]); }
+  catch { return null; }
 }
 
 export async function parseRules(req, res) {
   const { prompt } = req.body;
   if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
 
-  while (!generator) await new Promise(r => setTimeout(r, 100));
+  const fullPrompt = `
+Convert this segment description to a JSON array of rule objects with keys:
+  field — the field name (strictly one of "spend", "visits", "last_purchase_date", "inactive_days", "last_active"),
+  op    — the operator (strictly one of ">", "<", "=", ">=", "<="),
+  value — a number or ISO date string.
+Only output the JSON array (no extra text).
 
-  const fullPrompt = `Convert this segment description to JSON rules: "${prompt}". Output only a JSON array of rule objects like: [{"field":"last_purchase_date","op":"<","value":"2023-12-01"},{"field":"spend","op":">","value":5000}]`;
+Description: "${prompt}"
+`.trim();
 
   try {
-    const output = await generator(fullPrompt, { max_new_tokens: 128 });
-    const rules = extractJsonArray(output[0].generated_text);
-    if (!rules) {
-      return res.status(422).json({ error: 'Could not extract rules from model output', model_output: output[0].generated_text });
+    const raw = await generateWithGemini('gemini-2.0-flash', fullPrompt);
+    const arr = extractJsonArray(raw);
+    if (!arr) {
+      return res.status(422).json({ error: 'Could not parse JSON', model_output: raw });
     }
-    res.json({ rules, original: prompt });
+    // Normalize into your QueryBuilder format
+    const ruleSet = {
+      combinator: 'and',
+      rules: arr.map(r => ({
+        field: r.field || r.fact,
+        operator: r.op || r.operator,
+        value: r.value,
+      })),
+    };
+    return res.json({ rules: ruleSet, originalPrompt: prompt });
   } catch (err) {
-    res.status(500).json({ error: 'LLM inference failed', details: err.message });
+    console.error(err);
+    return res.status(500).json({ error: 'Inference failed', details: err.message });
   }
 }

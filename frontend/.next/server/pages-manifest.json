@@ -3,8 +3,8 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
-  "/campaigns/new": "pages/campaigns/new.js",
   "/campaigns": "pages/campaigns.js",
-  "/auth/callback": "pages/auth/callback.js",
-  "/404": "pages/404.js"
+  "/campaigns/[id]": "pages/campaigns/[id].js",
+  "/404": "pages/404.js",
+  "/campaigns/new": "pages/campaigns/new.js"
 }

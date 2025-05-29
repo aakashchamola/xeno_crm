@@ -1,29 +1,41 @@
-import { pipeline } from '@xenova/transformers';
-
-let generator;
-(async () => {
-  generator = await pipeline('text-generation', 'Xenova/distilgpt2');
-})();
+// ai-service/src/controllers/suggestMessageController.js
+import { generateWithGemini } from '../utils/aiClient.js';
 
 export async function suggestMessage(req, res) {
   const { segmentRules, campaignName } = req.body;
   if (!segmentRules || !campaignName) {
     return res.status(400).json({ error: 'Missing segmentRules or campaignName' });
   }
-  while (!generator) await new Promise(r => setTimeout(r, 100));
+
+  const prompt = `
+Suggest 3 short, catchy SMS messages for a campaign named "${campaignName}"
+targeting this segment: ${JSON.stringify(segmentRules)}.
+Only return a JSON array of strings, e.g. ["msg1", "msg2", "msg3"]. give straightforward, clear, 
+and engaging messages that are suitable for SMS but dont give any links or redirects or anything just catchy marketing messages.
+  `.trim();
+
   try {
-    const prompt = `Suggest 3 short, catchy campaign messages for a campaign named "${campaignName}" targeting: ${JSON.stringify(segmentRules)}. Output as a JSON array.`;
-    const output = await generator(prompt, { max_new_tokens: 128 });
-    const match = output[0].generated_text.match(/\[.*?\]/s);
+    const raw = await generateWithGemini('gemini-2.0-flash', prompt);
+
+    // Try to pull out a JSON array
+    const match = raw.match(/\[.*\]/s);
     let suggestions = [];
     if (match) {
-      try { suggestions = JSON.parse(match[0]); } catch {}
+      try {
+        suggestions = JSON.parse(match[0]);
+      } catch {
+        // fall through to fallback
+      }
     }
+
+    // Fallback if no valid array
     if (!Array.isArray(suggestions) || suggestions.length === 0) {
-      suggestions = [output[0].generated_text];
+      suggestions = [raw.trim()];
     }
-    res.json({ suggestions });
+
+    return res.json({ suggestions });
   } catch (err) {
-    res.status(500).json({ error: 'LLM inference failed', details: err.message });
+    console.error('suggestMessage error:', err);
+    return res.status(500).json({ error: 'Inference failed', details: err.message });
   }
 }

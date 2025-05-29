@@ -32,7 +32,7 @@ export default function CampaignForm({ onCreated }) {
       combinator: rulesObj.combinator,
       rules: rulesObj.rules.map(r => ({
         field: r.field,
-        op: r.op || r.operator || '=', // Always provide op
+        op: r.op || r.operator || '=',
         value: r.value
       })),
     };
@@ -243,7 +243,7 @@ export default function CampaignForm({ onCreated }) {
         {loading ? "Generating..." : "Suggest Rules"}
       </button>
       <br />
-      <button
+      {/* <button
         type="button"
         onClick={handlePreview}
         disabled={loading || !validateRules(rules)}
@@ -253,19 +253,19 @@ export default function CampaignForm({ onCreated }) {
       </button>
       {previewCount !== null && (
         <span style={{ marginLeft: 8 }}>Audience Size: {previewCount}</span>
-      )}
-      <button type="button" onClick={handleLookalike} disabled={loading || !validateRules(rules)} aria-label="Suggest Lookalike Segment">
+      )} */}
+      {/* <button type="button" onClick={handleLookalike} disabled={loading || !validateRules(rules)} aria-label="Suggest Lookalike Segment">
         Suggest Lookalike Segment
       </button>
       {lookalike.length > 0 && (
         <pre aria-live="polite">{JSON.stringify(lookalike, null, 2)}</pre>
-      )}
-      <button type="button" onClick={handleAutoTag} disabled={loading || !name.trim() || !message.trim()} aria-label="Auto-tag Campaign">
+      )} */}
+      {/* <button type="button" onClick={handleAutoTag} disabled={loading || !name.trim() || !message.trim()} aria-label="Auto-tag Campaign">
         Auto-tag Campaign
       </button>
       {tags.length > 0 && (
         <div aria-live="polite">Tags: {tags.join(', ')}</div>
-      )}
+      )} */}
       <button type="button" onClick={handleMessageAI} disabled={loading || !validateRules(rules) || !name.trim()} aria-label="Suggest Messages">
         Suggest Messages
       </button>
@@ -295,10 +295,10 @@ export default function CampaignForm({ onCreated }) {
     </ul>
   </div>
 )}
-      <button type="button" onClick={handleSuggestTime} disabled={loading || !name.trim()} aria-label="Suggest Send Time">
+      {/* <button type="button" onClick={handleSuggestTime} disabled={loading || !name.trim()} aria-label="Suggest Send Time">
         Suggest Send Time
       </button>
-      {suggestedTime && <div aria-live="polite">Suggested Send Time: {suggestedTime}</div>}
+      {suggestedTime && <div aria-live="polite">Suggested Send Time: {suggestedTime}</div>} */}
       <RuleBuilder rules={rules} setRules={setRules} />
       <button
         type="submit"

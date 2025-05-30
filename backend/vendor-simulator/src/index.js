@@ -6,9 +6,15 @@ app.use(express.json());
 
 const API_GATEWAY_URL = process.env.API_GATEWAY_URL || 'http://api-gateway:8002/delivery-receipts';
 
+function isValidSendPayload(obj) {
+  return obj && obj.campaignId && obj.customerId && typeof obj.message === 'string';
+}
+
 app.post('/send', async (req, res) => {
   const { campaignId, customerId, message } = req.body;
-
+  if (!isValidSendPayload(req.body)) {
+    return res.status(400).json({ error: 'Missing campaignId, customerId, or message' });
+  }
   // Simulate delivery result: 90% sent, 10% failed
   const isSuccess = Math.random() < 0.9;
   const status = isSuccess ? 'sent' : 'failed';
@@ -36,7 +42,6 @@ app.post('/send', async (req, res) => {
 app.get('/health', (req, res) => {
   res.send('OK');
 });
-
 
 const PORT = process.env.PORT || 8005;
 app.listen(PORT, () => {

@@ -1,7 +1,31 @@
 const amqp = require('amqplib');
 const { saveCustomer, saveOrder } = require('./db');
+const express = require('express');
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://localhost';
+
+// Simple validation helpers
+function isValidCustomer(obj) {
+  return obj && typeof obj.name === 'string' && typeof obj.email === 'string';
+}
+function isValidOrder(obj) {
+  return obj && obj.orderId && obj.customerId && obj.amount !== undefined && obj.date;
+}
+
+async function retryAsync(fn, retries = 3, delay = 500) {
+  let lastErr;
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (i < retries - 1) {
+        await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
+      }
+    }
+  }
+  throw lastErr;
+}
 
 async function connectWithRetry(retries = 5, delay = 3000) {
   for (let i = 0; i < retries; i++) {
@@ -31,7 +55,8 @@ async function start() {
     if (msg !== null) {
       try {
         const customer = JSON.parse(msg.content.toString());
-        await saveCustomer(customer);
+        if (!isValidCustomer(customer)) throw new Error('Invalid customer data');
+        await retryAsync(() => saveCustomer(customer), 3, 500);
         channel.ack(msg);
       } catch (err) {
         console.error(' Failed to save customer:', err);
@@ -44,7 +69,8 @@ async function start() {
     if (msg !== null) {
       try {
         const order = JSON.parse(msg.content.toString());
-        await saveOrder(order);
+        if (!isValidOrder(order)) throw new Error('Invalid order data');
+        await retryAsync(() => saveOrder(order), 3, 500);
         channel.ack(msg);
       } catch (err) {
         console.error(' Failed to save order:', err);
@@ -55,6 +81,11 @@ async function start() {
 
   console.log(' Ingestion consumer started. Listening for customers and orders...');
 }
+
+// Health check server
+const healthApp = express();
+healthApp.get('/health', (req, res) => res.json({ status: 'ok' }));
+healthApp.listen(8007, () => console.log('Ingestion consumer health endpoint on 8007'));
 
 start().catch((err) => {
   console.error(' Unrecoverable startup error:', err);

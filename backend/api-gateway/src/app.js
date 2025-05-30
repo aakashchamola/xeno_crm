@@ -23,7 +23,6 @@ initDb().then(db => {
   app.locals.db = db;
 app.use(cors());
 app.use(express.json());
-app.use(errorHandler);
 
 // Swagger UI setup
 const openapiPath = path.join(__dirname, '..', 'openapi.yaml');
@@ -40,6 +39,14 @@ app.use('/deliveryReceipts', require('./routes/deliveryReceipts'));
 app.use('/preview', require('./routes/previews'));
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+// Catch-all 404 for unknown routes
+app.use((req, res, next) => {
+  res.status(404).json({ error: 'Not Found' });
+});
+// Global error handler (must be last)
+app.use(errorHandler);
+
   const PORT = process.env.PORT || 8002;
   app.listen(PORT, () => {
     console.log(`API Gateway running on port ${PORT}`);

@@ -14,9 +14,9 @@ export default function CampaignForm({ onCreated }) {
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const AI_URL = process.env.NEXT_PUBLIC_AI_URL;
   const [messageSuggestions, setMessageSuggestions] = useState([]);
-  const [suggestedTime, setSuggestedTime] = useState('');
-  const [lookalike, setLookalike] = useState([]);
-  const [tags, setTags] = useState([]);
+  // const [suggestedTime, setSuggestedTime] = useState('');
+  // const [lookalike, setLookalike] = useState([]);
+  // const [tags, setTags] = useState([]);
   const errorRef = useRef(null);
 
   // Helper: Validate all rules have field, op, value
@@ -38,86 +38,87 @@ export default function CampaignForm({ onCreated }) {
     };
   }
 
-  const handlePreview = async () => {
-    setLoading(true);
-    setError("");
-    setSuccess("");
-    setPreviewCount(null);
-    if (!validateRules(rules)) {
-      setError("Please add at least one valid rule (field, operator, value).");
-      setLoading(false);
-      errorRef.current?.focus();
-      return;
-    }
-    try {
-      const jwt = localStorage.getItem("jwt");
-      const mappedRules = mapRulesForBackend(rules);
-      const res = await axios.post(
-        `${API_URL}/preview`,
-        { segmentRules: mappedRules },
-        { headers: { Authorization: `Bearer ${jwt}` } }
-      );
-      setPreviewCount(res.data.count);
-      setSuccess("Audience size calculated!");
-    } catch (err) {
-      if (err.response && err.response.data && err.response.data.error) {
-        setError("Preview failed: " + err.response.data.error);
-      } else {
-        setError("Preview failed: Network or server error.");
-      }
-      setPreviewCount(null);
-      errorRef.current?.focus();
-    }
-    setLoading(false);
-  };
+  // const handlePreview = async () => {
+  //   setLoading(true);
+  //   setError("");
+  //   setSuccess("");
+  //   setPreviewCount(null);
+  //   if (!validateRules(rules)) {
+  //     setError("Please add at least one valid rule (field, operator, value).");
+  //     setLoading(false);
+  //     errorRef.current?.focus();
+  //     return;
+  //   }
+  //   try {
+  //     const jwt = localStorage.getItem("jwt");
+  //     const mappedRules = mapRulesForBackend(rules);
+  //     const res = await axios.post(
+  //       `${API_URL}/preview`,
+  //       { segmentRules: mappedRules },
+  //       { headers: { Authorization: `Bearer ${jwt}` } }
+  //     );
+  //     setPreviewCount(res.data.count);
+  //     setSuccess("Audience size calculated!");
+  //   } catch (err) {
+  //     if (err.response && err.response.data && err.response.data.error) {
+  //       setError("Preview failed: " + err.response.data.error);
+  //     } else {
+  //       setError("Preview failed: Network or server error.");
+  //     }
+  //     setPreviewCount(null);
+  //     errorRef.current?.focus();
+  //   }
+  //   setLoading(false);
+  // };
 
-  const handleLookalike = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await axios.post(`${AI_URL}/ai/lookalike`, { segmentRules: rules });
-      setLookalike(res.data.lookalike || []);
-      setSuccess("Lookalike segment generated!");
-    } catch (err) {
-      setError('Failed to get lookalike segment');
-      errorRef.current?.focus();
-    }
-    setLoading(false);
-  };
+  // const handleLookalike = async () => {
+  //   setLoading(true);
+  //   setError('');
+  //   try {
+  //     const res = await axios.post(`${AI_URL}/ai/lookalike`, { segmentRules: rules });
+  //     setLookalike(res.data.lookalike || []);
+  //     setSuccess("Lookalike segment generated!");
+  //   } catch (err) {
+  //     setError('Failed to get lookalike segment');
+  //     errorRef.current?.focus();
+  //   }
+  //   setLoading(false);
+  // };
 
-  const handleAutoTag = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await axios.post(`${AI_URL}/ai/auto-tag`, { campaignName: name, message });
-      setTags(res.data.tags || []);
-      setSuccess("Tags generated!");
-    } catch (err) {
-      setError('Failed to get tags');
-      errorRef.current?.focus();
-    }
-    setLoading(false);
-  };
+  // const handleAutoTag = async () => {
+  //   setLoading(true);
+  //   setError('');
+  //   try {
+  //     const res = await axios.post(`${AI_URL}/ai/auto-tag`, { campaignName: name, message });
+  //     setTags(res.data.tags || []);
+  //     setSuccess("Tags generated!");
+  //   } catch (err) {
+  //     setError('Failed to get tags');
+  //     errorRef.current?.focus();
+  //   }
+  //   setLoading(false);
+  // };
 
-  const handleSuggestTime = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await axios.post(`${AI_URL}/ai/suggest-send-time`, {
-        campaignName: name, 
-      });
-      setSuggestedTime(res.data.suggestedTime);
-      setSuccess("Suggested send time generated!");
-    } catch (err) {
-      setError('Failed to get suggested time');
-      errorRef.current?.focus();
-    }
-    setLoading(false);
-  };
+  // const handleSuggestTime = async () => {
+  //   setLoading(true);
+  //   setError('');
+  //   try {
+  //     const res = await axios.post(`${AI_URL}/ai/suggest-send-time`, {
+  //       campaignName: name, 
+  //     });
+  //     setSuggestedTime(res.data.suggestedTime);
+  //     setSuccess("Suggested send time generated!");
+  //   } catch (err) {
+  //     setError('Failed to get suggested time');
+  //     errorRef.current?.focus();
+  //   }
+  //   setLoading(false);
+  // };
 
   const handleMessageAI = async () => {
     setLoading(true);
     setError('');
+    setSuccess("");
     try {
       const res = await axios.post(`${AI_URL}/ai/suggest-message`, {
         segmentRules: rules,
@@ -224,6 +225,7 @@ export default function CampaignForm({ onCreated }) {
         disabled={loading}
       />
       <br />
+      {/* --- AI Feature 1: Natural Language to Rules --- */}
       <label htmlFor="ai-prompt">Describe your segment (AI):</label>
       <input
         id="ai-prompt"
@@ -243,6 +245,38 @@ export default function CampaignForm({ onCreated }) {
         {loading ? "Generating..." : "Suggest Rules"}
       </button>
       <br />
+      {/* --- AI Feature 2: Message Suggestions --- */}
+      <button type="button" onClick={handleMessageAI} disabled={loading || !validateRules(rules) || !name.trim()} aria-label="Suggest Messages" style={{ marginTop: 8 }}>
+        Suggest Messages
+      </button>
+      {messageSuggestions.length > 0 && (
+        <div style={{ marginTop: 8 }}>
+          <h5>Suggestions:</h5>
+          <ul>
+            {messageSuggestions.map((msg, i) => {
+              const display =
+                typeof msg === "string"
+                  ? msg
+                  : msg.text
+                  ? msg.text
+                  : JSON.stringify(msg);
+              return (
+                <li key={i} style={{ marginBottom: 4 }}>
+                  <button
+                    type="button"
+                    onClick={() => setMessage(display)}
+                    aria-label={`Use suggestion: ${display}`}
+                    style={{ fontSize: 16, padding: '4px 10px', margin: 0 }}
+                  >
+                    {display}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+      {/* --- Future AI features (commented for upgrade) --- */}
       {/* <button
         type="button"
         onClick={handlePreview}
@@ -266,35 +300,6 @@ export default function CampaignForm({ onCreated }) {
       {tags.length > 0 && (
         <div aria-live="polite">Tags: {tags.join(', ')}</div>
       )} */}
-      <button type="button" onClick={handleMessageAI} disabled={loading || !validateRules(rules) || !name.trim()} aria-label="Suggest Messages">
-        Suggest Messages
-      </button>
-     {messageSuggestions.length > 0 && (
-  <div>
-    <h5>Suggestions:</h5>
-    <ul>
-      {messageSuggestions.map((msg, i) => {
-        const display =
-          typeof msg === "string"
-            ? msg
-            : msg.text
-            ? msg.text
-            : JSON.stringify(msg);
-        return (
-          <li key={i}>
-            <button
-              type="button"
-              onClick={() => setMessage(display)}
-              aria-label={`Use suggestion: ${display}`}
-            >
-              {display}
-            </button>
-          </li>
-        );
-      })}
-    </ul>
-  </div>
-)}
       {/* <button type="button" onClick={handleSuggestTime} disabled={loading || !name.trim()} aria-label="Suggest Send Time">
         Suggest Send Time
       </button>
@@ -303,7 +308,7 @@ export default function CampaignForm({ onCreated }) {
       <button
         type="submit"
         disabled={loading || !name.trim() || !message.trim() || !validateRules(rules)}
-        style={{ marginTop: 12 }}
+        style={{ marginTop: 16 }}
         aria-label="Create Campaign"
       >
         {loading ? "Submitting..." : "Create Campaign"}

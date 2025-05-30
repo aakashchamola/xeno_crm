@@ -13,10 +13,18 @@ const pool = mysql.createPool({
 async function saveCustomer(customer) {
   // Accepts: { name, email, phone, spend, visits, last_active }
   const { name, email, phone, spend = 0, visits = 0, last_active = null } = customer;
-  await pool.query(
-    'INSERT INTO customers (name, email, phone, spend, visits, last_active) VALUES (?, ?, ?, ?, ?, ?)',
-    [name, email, phone || null, spend, visits, last_active]
-  );
+  try {
+    await pool.query(
+      'INSERT INTO customers (name, email, phone, spend, visits, last_active) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, email, phone || null, spend, visits, last_active]
+    );
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      console.warn('Duplicate customer:', email);
+      return;
+    }
+    throw err;
+  }
 }
 
 async function saveOrder(order) {
@@ -33,11 +41,18 @@ async function saveOrder(order) {
       mysqlDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
     }
   }
-
-  await pool.query(
-    'INSERT INTO orders (order_id, customer_id, amount, date) VALUES (?, ?, ?, ?)',
-    [orderId, customerId, amount, mysqlDate]
-  );
+  try {
+    await pool.query(
+      'INSERT INTO orders (order_id, customer_id, amount, date) VALUES (?, ?, ?, ?)',
+      [orderId, customerId, amount, mysqlDate]
+    );
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      console.warn('Duplicate order:', orderId);
+      return;
+    }
+    throw err;
+  }
 }
 
 module.exports = { saveCustomer, saveOrder };

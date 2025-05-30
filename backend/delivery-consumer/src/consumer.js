@@ -2,6 +2,8 @@ const amqp = require('amqplib');
 const axios = require('axios');
 const mysql = require('mysql2/promise');
 const { saveCommunicationLog, updateDeliveryStatus } = require('./db');
+const express = require('express');
+const chrono = require('chrono-node');
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://localhost';
 const VENDOR_API_URL = process.env.VENDOR_API_URL || 'http://vendor-simulator:8005/send';
@@ -16,7 +18,42 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
+function isValidCampaign(obj) {
+  return obj && typeof obj.name === 'string' && typeof obj.message === 'string';
+}
+function isValidReceipt(obj) {
+  return obj && obj.campaign_id && obj.customer_id && obj.status;
+}
+async function retryAsync(fn, retries = 3, delay = 500) {
+  let lastErr;
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (i < retries - 1) {
+        await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
+      }
+    }
+  }
+  throw lastErr;
+}
+
 // Simple rule engine for segmentRules
+function normalizeValue(field, value) {
+  // Only parse for date fields
+  if (["last_purchase_date", "last_active"].includes(field) && typeof value === "string") {
+    // If already ISO, return as is
+    if (/^\d{4}-\d{2}-\d{2}/.test(value)) return value;
+    const parsed = chrono.parseDate(value);
+    if (parsed) {
+      // Format as YYYY-MM-DD
+      return parsed.toISOString().slice(0, 10);
+    }
+  }
+  return value;
+}
+
 function buildWhereClause(segmentRules) {
   if (!segmentRules || !Array.isArray(segmentRules.rules) || !segmentRules.rules.length) {
     return { clause: '1', params: [] }; // always true
@@ -28,7 +65,7 @@ function buildWhereClause(segmentRules) {
   for (const rule of segmentRules.rules) {
     if (rule.field && ops[rule.op] && rule.value !== undefined) {
       clauseParts.push(`\`${rule.field}\` ${ops[rule.op]} ?`);
-      params.push(rule.value);
+      params.push(normalizeValue(rule.field, rule.value));
     }
   }
   return {
@@ -65,6 +102,7 @@ async function start() {
     if (msg !== null) {
       try {
         const campaign = JSON.parse(msg.content.toString());
+        if (!isValidCampaign(campaign)) throw new Error('Invalid campaign data');
 
         // 1. Insert campaign into DB and get campaign_id
         const [result] = await pool.query(
@@ -96,12 +134,12 @@ async function start() {
         for (const customer_id of customerIds) {
           try {
             await saveCommunicationLog({ campaign_id, customer_id, message: campaign.message, status: 'sent' });
-            // Fan-out to vendor
-            await axios.post(VENDOR_API_URL, {
+            // Fan-out to vendor with retry
+            await retryAsync(() => axios.post(VENDOR_API_URL, {
               campaignId: campaign_id,
               customerId: customer_id,
               message: campaign.message,
-            });
+            }), 3, 500);
             sent++;
           } catch (err) {
             failed++;
@@ -128,6 +166,7 @@ async function start() {
     if (msg !== null) {
       try {
         const receipt = JSON.parse(msg.content.toString());
+        if (!isValidReceipt(receipt)) throw new Error('Invalid delivery receipt');
         await updateDeliveryStatus(receipt);
         channel.ack(msg);
       } catch (err) {
@@ -139,5 +178,10 @@ async function start() {
 
   console.log('Delivery consumer started. Listening for campaigns and delivery receipts...');
 }
+
+// Health check server
+const healthApp = express();
+healthApp.get('/health', (req, res) => res.json({ status: 'ok' }));
+healthApp.listen(8008, () => console.log('Delivery consumer health endpoint on 8008'));
 
 start().catch(console.error);

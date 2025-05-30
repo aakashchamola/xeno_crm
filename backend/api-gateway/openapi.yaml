@@ -3,9 +3,9 @@ info:
   title: Xeno CRM API
   version: 1.0.0
   description: |
-    API Gateway for Xeno CRM. All endpoints require JWT authentication except /health.
+    API Gateway for Xeno CRM. All endpoints require JWT authentication except /health and /api-docs.
 servers:
-  - url: http://localhost:3001
+  - url: http://localhost:8002
 components:
   securitySchemes:
     bearerAuth:
@@ -17,6 +17,9 @@ components:
       type: object
       required: [name, email]
       properties:
+        id:
+          type: integer
+          example: 1
         name:
           type: string
           example: Mohit Sharma
@@ -27,16 +30,36 @@ components:
         phone:
           type: string
           example: "+919999999999"
+        spend:
+          type: integer
+          example: 12000
+        visits:
+          type: integer
+          example: 2
+        last_active:
+          type: string
+          format: date
+          example: "2024-05-27"
+        last_purchase_date:
+          type: string
+          format: date
+          example: "2024-05-20"
+        inactive_days:
+          type: integer
+          example: 90
     Order:
       type: object
       required: [orderId, customerId, amount, date]
       properties:
+        id:
+          type: integer
+          example: 1
         orderId:
           type: string
           example: ORD123
         customerId:
-          type: string
-          example: CUST456
+          type: integer
+          example: 1
         amount:
           type: number
           example: 1200.50
@@ -48,27 +71,44 @@ components:
       type: object
       required: [name, segmentRules, message]
       properties:
+        id:
+          type: integer
+          example: 1
         name:
           type: string
           example: "Summer Sale"
         segmentRules:
-          type: array
-          items:
-            type: object
-          example: [{ "field": "spend", "op": ">", "value": 10000 }]
+          type: object
+          example: { "combinator": "and", "rules": [{ "field": "spend", "op": ">", "value": 10000 }] }
         message:
           type: string
-          example: "Hi Mohit, here’s 10% off…"
+          example: "Hi Mohit, here's 10% off…"
+        audienceSize:
+          type: integer
+          example: 100
+        sent:
+          type: integer
+          example: 90
+        failed:
+          type: integer
+          example: 10
+        status:
+          type: string
+          example: "completed"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-05-27T10:00:00Z"
     DeliveryReceipt:
       type: object
       required: [campaignId, customerId, status, timestamp]
       properties:
         campaignId:
-          type: string
-          example: "CMP123"
+          type: integer
+          example: 1
         customerId:
-          type: string
-          example: "CUST456"
+          type: integer
+          example: 1
         status:
           type: string
           enum: [sent, failed]
@@ -77,6 +117,19 @@ components:
           type: string
           format: date-time
           example: "2024-05-27T10:05:00Z"
+    PreviewRequest:
+      type: object
+      required: [segmentRules]
+      properties:
+        segmentRules:
+          type: object
+          example: { "combinator": "and", "rules": [{ "field": "spend", "op": ">", "value": 10000 }] }
+    PreviewResponse:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 42
     ErrorResponse:
       type: object
       properties:
@@ -85,6 +138,7 @@ components:
 paths:
   /customers:
     post:
+      tags: [Customers]
       summary: Ingest customer data
       security:
         - bearerAuth: []
@@ -107,8 +161,27 @@ paths:
           description: Unauthorized
         '500':
           description: Internal Server Error
+    get:
+      tags: [Customers]
+      summary: List all customers
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
   /orders:
     post:
+      tags: [Orders]
       summary: Ingest order data
       security:
         - bearerAuth: []
@@ -131,8 +204,27 @@ paths:
           description: Unauthorized
         '500':
           description: Internal Server Error
+    get:
+      tags: [Orders]
+      summary: List all orders
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
   /campaigns:
     post:
+      tags: [Campaigns]
       summary: Create campaign
       security:
         - bearerAuth: []
@@ -155,8 +247,56 @@ paths:
           description: Unauthorized
         '500':
           description: Internal Server Error
+    get:
+      tags: [Campaigns]
+      summary: List all campaigns
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of campaigns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Campaign'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+  /campaigns/{id}:
+    get:
+      tags: [Campaigns]
+      summary: Get campaign by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Campaign details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Campaign'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
   /delivery-receipts:
     post:
+      tags: [DeliveryReceipts]
       summary: Accept delivery receipt
       security:
         - bearerAuth: []
@@ -179,8 +319,38 @@ paths:
           description: Unauthorized
         '500':
           description: Internal Server Error
+  /preview:
+    post:
+      tags: [Preview]
+      summary: Preview segment size
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreviewRequest'
+      responses:
+        '200':
+          description: Preview result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreviewResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
   /health:
     get:
+      tags: [Health]
       summary: Health check
       responses:
         '200':

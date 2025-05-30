@@ -1,4 +1,3 @@
-
 /**
  * Very basic rule engine for demo: supports rules like
  * [{ field: "spend", op: ">", value: 10000 }]
@@ -24,8 +23,15 @@ function buildWhereClause(segmentRules) {
   };
 }
 
-async function previewSegment(req, res) {
+async function previewSegment(req, res, next) {
   try {
+    const { rules } = req.body;
+
+    // Validate rules format (basic validation for now)
+    if (!Array.isArray(rules) || rules.length === 0) {
+      return res.status(400).json({ error: 'Invalid rules: must be a non-empty array.' });
+    }
+
     const { segmentRules } = req.body;
     const db = req.app.locals.db;
     const { clause, params } = buildWhereClause(segmentRules);

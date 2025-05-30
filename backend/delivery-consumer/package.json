@@ -5,11 +5,11 @@
   "dependencies": {
     "amqplib": "^0.10.3",
     "axios": "^1.9.0",
+    "chrono-node": "^2.8.1",
+    "express": "^4.19.2",
     "mysql2": "^3.9.7"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "scripts": {},
   "keywords": [],
   "author": "",
   "license": "ISC",

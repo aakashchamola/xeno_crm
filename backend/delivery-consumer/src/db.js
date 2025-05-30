@@ -11,10 +11,18 @@ const pool = mysql.createPool({
 });
 
 async function saveCommunicationLog({ campaign_id, customer_id, message, status = 'sent' }) {
-  await pool.query(
-    'INSERT INTO communication_log (campaign_id, customer_id, message, status, created_at) VALUES (?, ?, ?, ?, NOW())',
-    [campaign_id, customer_id, message, status]
-  );
+  try {
+    await pool.query(
+      'INSERT INTO communication_log (campaign_id, customer_id, message, status, created_at) VALUES (?, ?, ?, ?, NOW())',
+      [campaign_id, customer_id, message, status]
+    );
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      console.warn('Duplicate communication_log:', campaign_id, customer_id);
+      return;
+    }
+    throw err;
+  }
 }
 
 async function updateDeliveryStatus({ campaign_id, customer_id, status }) {

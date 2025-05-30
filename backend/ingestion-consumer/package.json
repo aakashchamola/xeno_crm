@@ -4,10 +4,11 @@
   "main": "src/consumer.js",
   "dependencies": {
     "amqplib": "^0.10.3",
-    "mysql2": "^3.9.7"
+    "mysql2": "^3.9.7",
+    "express": "^4.19.2"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    
   },
   "keywords": [],
   "author": "",

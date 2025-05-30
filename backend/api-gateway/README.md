@@ -6,10 +6,10 @@ The API Gateway is the main entry point for all backend REST APIs in the Xeno CR
 
 ## Features
 
-- **RESTful APIs** for customers, orders, campaigns, and delivery receipts
-- **JWT authentication** for all endpoints (except `/health`and `/api-docs`)
+- **RESTful APIs** for customers, orders, campaigns, delivery receipts, and segment preview
+- **JWT authentication** for all endpoints (except `/health` and `/api-docs`)
 - **Request validation** using Joi
-- **Swagger UI** documentation at `/api-docs`
+- **Swagger UI** documentation at `/api-docs` (only service with Swagger)
 - **Publishes** all write operations to RabbitMQ queues for async processing
 
 ---
@@ -19,17 +19,97 @@ The API Gateway is the main entry point for all backend REST APIs in the Xeno CR
 | Method | Path                | Description                        | Auth Required |
 |--------|---------------------|------------------------------------|--------------|
 | POST   | `/customers`        | Ingest customer data               | Yes          |
+| GET    | `/customers`        | List all customers                 | Yes          |
 | POST   | `/orders`           | Ingest order data                  | Yes          |
+| GET    | `/orders`           | List all orders                    | Yes          |
 | POST   | `/campaigns`        | Create a campaign                  | Yes          |
-| POST   | `/deliveryReceipts` | Accept delivery receipt            | Yes          |
+| GET    | `/campaigns`        | List all campaigns                 | Yes          |
+| GET    | `/campaigns/{id}`   | Get campaign by ID                 | Yes          |
+| POST   | `/delivery-receipts`| Accept delivery receipt            | Yes          |
+| POST   | `/preview`          | Preview segment size               | Yes          |
 | GET    | `/health`           | Health check                       | No           |
 | GET    | `/api-docs`         | Swagger UI                         | No           |
 
 ---
 
-## Usage
+## Running the API Gateway Individually
 
-### Start via Docker Compose
+### 1. Install dependencies
 
 ```bash
-docker-compose up --build
+cd backend/api-gateway
+npm install
+```
+
+### 2. Create a `.env` file in `backend/api-gateway/` with the following variables:
+
+```
+PORT=8002
+MYSQL_HOST=localhost
+MYSQL_USER=root
+MYSQL_PASSWORD=root
+MYSQL_DATABASE=xeno_crm
+RABBITMQ_URL=amqp://localhost
+JWT_SECRET=your_jwt_secret
+```
+
+- Make sure MySQL and RabbitMQ are running and accessible at the above addresses.
+- The JWT secret must match the one used by the Auth Service.
+
+### 3. Start the service
+
+```bash
+npm start
+```
+
+The API Gateway will be available at [http://localhost:8002](http://localhost:8002)
+
+---
+
+## Health Check
+
+- `GET /health` returns `{ status: 'ok' }` if the service is running.
+
+---
+
+## Swagger/OpenAPI
+
+- Swagger UI is available at `/api-docs` ([http://localhost:8002/api-docs](http://localhost:8002/api-docs))
+- This is the **only service** in the project with Swagger/OpenAPI documentation, as required by the assignment.
+
+---
+
+## Example Usage
+
+### Authentication
+
+All endpoints (except `/health` and `/api-docs`) require a Bearer JWT in the `Authorization` header. Obtain a JWT by logging in via the `/auth/google` endpoint in `auth-service`.
+
+### Example: Ingest Customer
+
+```bash
+curl -X POST http://localhost:8002/customers \
+  -H "Authorization: Bearer <your_jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Mohit Sharma","email":"mohit@example.com"}'
+```
+
+### Example: Preview Segment Size
+
+```bash
+curl -X POST http://localhost:8002/preview \
+  -H "Authorization: Bearer <your_jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{"segmentRules": {"combinator": "and", "rules": [{"field": "spend", "op": ">", "value": 10000}]}}'
+```
+
+---
+
+## Troubleshooting
+
+- If the service fails to connect to MySQL or RabbitMQ, ensure those services are running and the `.env` values are correct.
+- Use `npm start` in this directory to run the service standalone, or use Docker Compose for the full stack.
+- Logs will show connection errors and validation failures.
+- For JWT errors, ensure your Auth Service and API Gateway use the same `JWT_SECRET`.
+
+---

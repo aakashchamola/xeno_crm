@@ -25,21 +25,19 @@ function buildWhereClause(segmentRules) {
 
 async function previewSegment(req, res, next) {
   try {
-    const { rules } = req.body;
-
-    // Validate rules format (basic validation for now)
-    if (!Array.isArray(rules) || rules.length === 0) {
-      return res.status(400).json({ error: 'Invalid rules: must be a non-empty array.' });
-    }
-
+    // Validate segmentRules format (as per validator)
     const { segmentRules } = req.body;
+    if (!segmentRules || !Array.isArray(segmentRules.rules) || segmentRules.rules.length === 0) {
+      return res.status(400).json({ error: 'Invalid segmentRules: must be a non-empty rules array.' });
+    }
     const db = req.app.locals.db;
     const { clause, params } = buildWhereClause(segmentRules);
     const [rows] = await db.query(`SELECT COUNT(*) as count FROM customers WHERE ${clause}`, params);
     res.json({ count: rows[0].count });
   } catch (err) {
-    console.error('Preview error:', err);
-    res.status(500).json({ error: 'Failed to preview segment.' });
+    err.status = 500;
+    err.message = 'Failed to preview segment.';
+    return next(err);
   }
 }
 

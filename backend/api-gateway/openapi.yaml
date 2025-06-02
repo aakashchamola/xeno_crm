@@ -15,11 +15,14 @@ components:
   schemas:
     Customer:
       type: object
-      required: [name, email]
+      required: [customer_id, name, email]
       properties:
         id:
           type: integer
           example: 1
+        customer_id:
+          type: string
+          example: CUST-123e4567-e89b-12d3-a456-426614174000
         name:
           type: string
           example: Mohit Sharma
@@ -58,8 +61,8 @@ components:
           type: string
           example: ORD123
         customerId:
-          type: integer
-          example: 1
+          type: string
+          example: CUST-123e4567-e89b-12d3-a456-426614174000
         amount:
           type: number
           example: 1200.50
@@ -83,6 +86,11 @@ components:
         message:
           type: string
           example: "Hi Mohit, here's 10% off…"
+        customerIds:
+          type: array
+          items:
+            type: string
+          example: ["CUST-123e4567-e89b-12d3-a456-426614174000", "CUST-789e4567-e89b-12d3-a456-426614174111"]
         audienceSize:
           type: integer
           example: 100
@@ -104,11 +112,11 @@ components:
       required: [campaignId, customerId, status, timestamp]
       properties:
         campaignId:
-          type: integer
-          example: 1
+          type: string
+          example: CMP-123e4567-e89b-12d3-a456-426614174000
         customerId:
-          type: integer
-          example: 1
+          type: string
+          example: CUST-123e4567-e89b-12d3-a456-426614174000
         status:
           type: string
           enum: [sent, failed]
@@ -147,10 +155,34 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Customer'
+              type: object
+              required: [name, email]
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                phone:
+                  type: string
+                spend:
+                  type: integer
+                visits:
+                  type: integer
+                last_active:
+                  type: string
+                  format: date
       responses:
         '202':
           description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  customer_id:
+                    type: string
         '400':
           description: Bad Request
           content:
@@ -179,6 +211,31 @@ paths:
           description: Unauthorized
         '500':
           description: Internal Server Error
+  /customers/search:
+    get:
+      summary: Search customers by name, phone, or email
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: Search query (name, phone, or email)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of matching customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'
+        '400':
+          description: Bad Request
+        '500':
+          description: Internal Server Error
   /orders:
     post:
       tags: [Orders]
@@ -190,10 +247,28 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Order'
+              type: object
+              required: [orderId, customerId, amount, date]
+              properties:
+                orderId:
+                  type: string
+                customerId:
+                  type: string
+                amount:
+                  type: number
+                date:
+                  type: string
+                  format: date-time
       responses:
         '202':
           description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
         '400':
           description: Bad Request
           content:
@@ -233,10 +308,29 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Campaign'
+              type: object
+              required: [name, segmentRules, message, customerIds]
+              properties:
+                name:
+                  type: string
+                segmentRules:
+                  type: object
+                message:
+                  type: string
+                customerIds:
+                  type: array
+                  items:
+                    type: string
       responses:
         '202':
           description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
         '400':
           description: Bad Request
           content:
@@ -309,6 +403,13 @@ paths:
       responses:
         '202':
           description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
         '400':
           description: Bad Request
           content:

@@ -1,8 +1,9 @@
 const { publishToQueue } = require('../utils/publisher');
+const { randomUUID } = require('crypto');
 
 async function createOrder(req, res, next) {
   try {
-    const { customerId, orderDetails } = req.body;
+    const { orderId, customerId, amount, date } = req.body;
     const db = req.app.locals.db;
 
     // Validate customerId exists in the database
@@ -11,13 +12,14 @@ async function createOrder(req, res, next) {
       return res.status(400).json({ error: 'Invalid customerId: no such customer exists.' });
     }
 
-    // Additional validation for orderDetails (if required)
-    if (!orderDetails || typeof orderDetails !== 'object') {
-      return res.status(400).json({ error: 'Invalid orderDetails: must be a valid object.' });
+    // Optionally: check for duplicate orderId
+    const [orderRows] = await db.query('SELECT id FROM orders WHERE order_id = ?', [orderId]);
+    if (orderRows.length) {
+      return res.status(400).json({ error: 'Order ID already exists.' });
     }
 
     // Publish the order to RabbitMQ
-    await publishToQueue('orders', req.body);
+    await publishToQueue('orders', { orderId, customerId, amount, date });
     res.status(202).json({ message: 'Order data accepted for processing.' });
   } catch (err) {
     err.status = 500;

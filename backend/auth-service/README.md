@@ -29,12 +29,12 @@ PORT=8003
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 GOOGLE_CALLBACK_URL=http://localhost:8003/auth/google/callback
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:8001
 JWT_SECRET=your_jwt_secret
 ```
 
 - Set up a Google OAuth 2.0 app in the Google Developer Console and use the credentials above.
-- The JWT secret must match the one used by the API Gateway.
+- The JWT secret must match the one used by the API Gateway and all backend services.
 - The callback URL must match what you set in Google Cloud.
 
 ### 3. Start the service
@@ -44,6 +44,16 @@ npm start
 ```
 
 The Auth Service will be available at [http://localhost:8003](http://localhost:8003)
+
+---
+
+## Running with Docker
+
+This service is fully Dockerized. To run with Docker Compose (recommended for local dev):
+
+```bash
+docker-compose up --build
+```
 
 ---
 
@@ -63,30 +73,9 @@ The Auth Service will be available at [http://localhost:8003](http://localhost:8
 ## Troubleshooting
 
 - If the service fails to connect to Google, check your OAuth credentials and callback URL.
-- If JWTs are not accepted by the API Gateway, ensure both use the same `JWT_SECRET`.
+- If JWTs are not accepted by the API Gateway, ensure all backend services use the same `JWT_SECRET`.
 - Use `npm start` in this directory to run the service standalone, or use Docker Compose for the full stack.
 - Logs will show authentication and token errors.
+- For full stack orchestration, use Docker Compose as described above.
 
 ---
-
-```md
-# Auth Service
-
-The Auth Service manages Google OAuth login and issues JWTs for authenticated users.
-
----
-
-## Features
-
-- **Google OAuth 2.0** login flow
-- **Issues JWTs** for authenticated users
-- **Redirects** to frontend with JWT token
-
----
-
-## Usage
-
-### Start via Docker Compose
-
-```bash
-docker-compose up --build

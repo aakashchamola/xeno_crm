@@ -13,6 +13,8 @@ The AI Service exposes endpoints to convert natural language audience descriptio
 - **POST /ai/performance-summary**: Summarize campaign performance
 - **POST /ai/suggest-send-time**: Suggest best send time
 - **Health check** endpoint at `/health` (port 8004)
+- **Robust error handling**: All endpoints return clear error messages and status codes
+- **Retry logic** for external LLM APIs (e.g., Gemini, Groq)
 
 ---
 
@@ -45,6 +47,16 @@ The AI Service will be available at [http://localhost:8004](http://localhost:800
 
 ---
 
+## Running with Docker
+
+This service is fully Dockerized. To run with Docker Compose (recommended for local dev):
+
+```bash
+docker-compose up --build
+```
+
+---
+
 ## Health Check
 
 - `GET http://localhost:8004/health` returns `{ status: 'ok' }` if the service is running.
@@ -74,7 +86,7 @@ curl -X POST http://localhost:8004/ai/suggest-message \
 ```bash
 curl -X POST http://localhost:8004/ai/auto-tag \
   -H "Content-Type: application/json" \
-  -d '{"campaignName": "Summer Sale", "message": "Hi Mohit, here's 10% off…"}'
+  -d '{"campaignName": "Summer Sale", "message": "Hi Mohit, here\'s 10% off…"}'
 ```
 
 ### Lookalike Audience
@@ -109,5 +121,6 @@ curl -X POST http://localhost:8004/ai/suggest-send-time \
 - If LLM endpoints fail, check your API keys and network access.
 - Use `npm start` in this directory to run the service standalone, or use Docker Compose for the full stack.
 - Logs will show inference and API errors.
+- For full stack orchestration, use Docker Compose as described above.
 
 ---

@@ -7,8 +7,11 @@ The Delivery Consumer service handles campaign fan-out and delivery receipt proc
 ## Features
 
 - **Consumes** `campaigns` and `deliveryReceipts` queues from RabbitMQ
-- **Fans out** campaign messages to each customer via the vendor simulator
-- **Updates** delivery status in `communication_log` table upon receipt
+- **Fans out** campaign messages to each customer via the vendor simulator (using string `customer_id`)
+- **Updates** delivery status in `communication_log` table upon receipt (using string `customer_id`)
+- **Updates campaign sent/failed stats in real-time** based on delivery receipts
+- **Handles errors and retries** for vendor API and DB writes
+- **Robust logging** for all delivery and error events
 - **Health check** endpoint at `/health` (port 8008)
 
 ---
@@ -34,7 +37,7 @@ VENDOR_API_URL=http://localhost:8005/send
 ```
 
 - Make sure MySQL, RabbitMQ, and the Vendor Simulator are running and accessible at the above addresses.
-- The database schema should match the one in `db/init.sql`.
+- The database schema should match the one in `db/init.sql` (all customer references are by string `customer_id`).
 
 ### 3. Start the service
 
@@ -43,6 +46,16 @@ npm start
 ```
 
 The consumer will listen for messages on the `campaigns` and `deliveryReceipts` queues and process them accordingly.
+
+---
+
+## Running with Docker
+
+This service is fully Dockerized. To run with Docker Compose (recommended for local dev):
+
+```bash
+docker-compose up --build
+```
 
 ---
 
@@ -65,27 +78,7 @@ The consumer will listen for messages on the `campaigns` and `deliveryReceipts` 
 - Use `npm start` in this directory to run the service standalone, or use Docker Compose for the full stack.
 - Logs will show connection errors and delivery failures.
 - Duplicate communication logs are skipped and logged as warnings.
+- If you see DB errors about type mismatches, ensure your schema matches the latest `init.sql` (all customer references are strings).
+- For full stack orchestration, use Docker Compose as described above.
 
 ---
-
-```md
-# Delivery Consumer
-
-The Delivery Consumer service handles campaign fan-out and delivery receipt processing. It listens to RabbitMQ for new campaigns, sends messages to the vendor simulator, and updates delivery statuses in MySQL.
-
----
-
-## Features
-
-- **Consumes** `campaigns` and `deliveryReceipts` queues from RabbitMQ
-- **Fans out** campaign messages to each customer via the vendor simulator
-- **Updates** delivery status in `communication_log` table upon receipt
-
----
-
-## Usage
-
-### Start via Docker Compose
-
-```bash
-docker-compose up --build

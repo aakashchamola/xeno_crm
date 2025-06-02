@@ -5,11 +5,11 @@ async function createCampaign(req, res, next) {
     const { name, audienceSegmentId } = req.body;
     const db = req.app.locals.db;
 
-    // Validate audienceSegmentId exists in the database
-    const [segmentRows] = await db.query('SELECT id FROM audience_segments WHERE id = ?', [audienceSegmentId]);
-    if (!segmentRows.length) {
-      return res.status(400).json({ error: 'Invalid audienceSegmentId: no such segment exists.' });
-    }
+    // // Validate audienceSegmentId exists in the database
+    // const [segmentRows] = await db.query('SELECT id FROM audience_segments WHERE id = ?', [audienceSegmentId]);
+    // if (!segmentRows.length) {
+    //   return res.status(400).json({ error: 'Invalid audienceSegmentId: no such segment exists.' });
+    // }
 
     // Publish the campaign to RabbitMQ
     await publishToQueue('campaigns', req.body);
@@ -20,6 +20,7 @@ async function createCampaign(req, res, next) {
     return next(err);
   }
 }
+
 async function getCampaigns(req, res, next) {
   try {
     // No user input in query, so safe

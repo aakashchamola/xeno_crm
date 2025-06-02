@@ -25,7 +25,11 @@ async function saveCommunicationLog({ campaign_id, customer_id, message, status 
   }
 }
 
-async function updateDeliveryStatus({ campaign_id, customer_id, status }) {
+async function updateDeliveryStatus(receipt) {
+  // Normalize keys to snake_case for DB
+  const campaign_id = receipt.campaign_id || receipt.campaignId;
+  const customer_id = receipt.customer_id || receipt.customerId;
+  const status = receipt.status;
   await pool.query(
     'UPDATE communication_log SET status = ? WHERE campaign_id = ? AND customer_id = ?',
     [status, campaign_id, customer_id]

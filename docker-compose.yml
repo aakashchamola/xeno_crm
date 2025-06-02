@@ -25,7 +25,6 @@ services:
       - mysql
     ports:
       - "8002:8002"
-
   ingestion-consumer:
     build: ./backend/ingestion-consumer
     env_file:

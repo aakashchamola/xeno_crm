@@ -11,16 +11,16 @@ const pool = mysql.createPool({
 });
 
 async function saveCustomer(customer) {
-  // Accepts: { name, email, phone, spend, visits, last_active }
-  const { name, email, phone, spend = 0, visits = 0, last_active = null } = customer;
+  // Accepts: { customer_id, name, email, phone, spend, visits, last_active }
+  const { customer_id, name, email, phone, spend = 0, visits = 0, last_active = null } = customer;
   try {
     await pool.query(
-      'INSERT INTO customers (name, email, phone, spend, visits, last_active) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, email, phone || null, spend, visits, last_active]
+      'INSERT INTO customers (customer_id, name, email, phone, spend, visits, last_active) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [customer_id, name, email, phone || null, spend, visits, last_active]
     );
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') {
-      console.warn('Duplicate customer:', email);
+      console.warn('Duplicate customer:', email, customer_id);
       return;
     }
     throw err;
@@ -41,17 +41,38 @@ async function saveOrder(order) {
       mysqlDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
     }
   }
+
+  const conn = await pool.getConnection();
   try {
-    await pool.query(
+    await conn.beginTransaction();
+
+    // 1. Insert order
+    await conn.query(
       'INSERT INTO orders (order_id, customer_id, amount, date) VALUES (?, ?, ?, ?)',
       [orderId, customerId, amount, mysqlDate]
     );
+
+    // 2. Update customer spend, visits, last_purchase_date, inactive_days
+    await conn.query(
+      `UPDATE customers
+       SET spend = spend + ?,
+           visits = visits + 1,
+           last_purchase_date = ?,
+           inactive_days = DATEDIFF(CURDATE(), ?)
+       WHERE id = ?`,
+      [amount, mysqlDate, mysqlDate, customerId]
+    );
+
+    await conn.commit();
   } catch (err) {
+    await conn.rollback();
     if (err.code === 'ER_DUP_ENTRY') {
       console.warn('Duplicate order:', orderId);
       return;
     }
     throw err;
+  } finally {
+    conn.release();
   }
 }
 

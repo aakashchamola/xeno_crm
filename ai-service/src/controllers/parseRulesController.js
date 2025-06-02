@@ -1,4 +1,4 @@
-import { generateWithGemini } from '../utils/aiClient.js';
+import { generateWithGroq } from '../utils/aiClient.js';
 
 function extractJsonArray(text) {
   text = text.replace(/```json\s*/i, '').replace(/```/g, '').trim();
@@ -23,7 +23,7 @@ Description: "${prompt}"
 `.trim();
 
   try {
-    const raw = await generateWithGemini('gemini-2.0-flash', fullPrompt);
+    const raw = await generateWithGroq(fullPrompt, 'llama-3.3-70b-versatile');
     const arr = extractJsonArray(raw);
     if (!arr) {
       return res.status(422).json({ error: 'Could not parse JSON', model_output: raw });

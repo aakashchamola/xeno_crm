@@ -30,46 +30,49 @@ export default function CampaignForm({ onCreated }) {
   function mapRulesForBackend(rulesObj) {
     return {
       combinator: rulesObj.combinator,
-      rules: rulesObj.rules.map(r => ({
-        field: r.field,
-        op: r.op || r.operator || '=',
-        value: r.value
-      })),
+      rules: rulesObj.rules
+        .filter(r => r.field && (r.op || r.operator) && r.value !== undefined && r.value !== "")
+        .map(r => ({
+          field: r.field,
+          op: r.op || r.operator || '=',
+          value: r.value
+        })),
     };
   }
 
-  // const handlePreview = async () => {
-  //   setLoading(true);
-  //   setError("");
-  //   setSuccess("");
-  //   setPreviewCount(null);
-  //   if (!validateRules(rules)) {
-  //     setError("Please add at least one valid rule (field, operator, value).");
-  //     setLoading(false);
-  //     errorRef.current?.focus();
-  //     return;
-  //   }
-  //   try {
-  //     const jwt = localStorage.getItem("jwt");
-  //     const mappedRules = mapRulesForBackend(rules);
-  //     const res = await axios.post(
-  //       `${API_URL}/preview`,
-  //       { segmentRules: mappedRules },
-  //       { headers: { Authorization: `Bearer ${jwt}` } }
-  //     );
-  //     setPreviewCount(res.data.count);
-  //     setSuccess("Audience size calculated!");
-  //   } catch (err) {
-  //     if (err.response && err.response.data && err.response.data.error) {
-  //       setError("Preview failed: " + err.response.data.error);
-  //     } else {
-  //       setError("Preview failed: Network or server error.");
-  //     }
-  //     setPreviewCount(null);
-  //     errorRef.current?.focus();
-  //   }
-  //   setLoading(false);
-  // };
+  // Audience Preview logic
+  const handlePreview = async () => {
+    setLoading(true);
+    setError("");
+    setSuccess("");
+    setPreviewCount(null);
+    if (!validateRules(rules)) {
+      setError("Please add at least one valid rule (field, operator, value). ");
+      setLoading(false);
+      errorRef.current?.focus();
+      return;
+    }
+    try {
+      const jwt = localStorage.getItem("jwt");
+      const mappedRules = mapRulesForBackend(rules);
+      const res = await axios.post(
+        `${API_URL}/preview`,
+        { segmentRules: mappedRules },
+        { headers: { Authorization: `Bearer ${jwt}` } }
+      );
+      setPreviewCount(res.data.count);
+      setSuccess("Audience size calculated!");
+    } catch (err) {
+      if (err.response && err.response.data && err.response.data.error) {
+        setError("Preview failed: " + err.response.data.error);
+      } else {
+        setError("Preview failed: Network or server error.");
+      }
+      setPreviewCount(null);
+      errorRef.current?.focus();
+    }
+    setLoading(false);
+  };
 
   // const handleLookalike = async () => {
   //   setLoading(true);
@@ -183,7 +186,12 @@ export default function CampaignForm({ onCreated }) {
       const jwt = localStorage.getItem("jwt");
       await axios.post(
         `${API_URL}/campaigns`,
-        { name, message, segmentRules: mapRulesForBackend(rules), customerIds: [] },
+        {
+          name,
+          message,
+          segmentRules: mapRulesForBackend(rules),
+          customerIds: []
+        },
         { headers: { Authorization: `Bearer ${jwt}` } }
       );
       setSuccess("Campaign created!");
@@ -277,17 +285,19 @@ export default function CampaignForm({ onCreated }) {
         </div>
       )}
       {/* --- Future AI features (commented for upgrade) --- */}
-      {/* <button
+      <RuleBuilder rules={rules} setRules={setRules} />
+      <button
         type="button"
         onClick={handlePreview}
         disabled={loading || !validateRules(rules)}
         aria-label="Preview Segment Size"
+        style={{ marginTop: 8, marginBottom: 8 }}
       >
         {loading ? "Loading..." : "Preview Segment Size"}
       </button>
       {previewCount !== null && (
-        <span style={{ marginLeft: 8 }}>Audience Size: {previewCount}</span>
-      )} */}
+        <span style={{ marginLeft: 8, fontWeight: 500, color: '#0070f3' }}>Audience Size: {previewCount}</span>
+      )}
       {/* <button type="button" onClick={handleLookalike} disabled={loading || !validateRules(rules)} aria-label="Suggest Lookalike Segment">
         Suggest Lookalike Segment
       </button>
@@ -304,7 +314,6 @@ export default function CampaignForm({ onCreated }) {
         Suggest Send Time
       </button>
       {suggestedTime && <div aria-live="polite">Suggested Send Time: {suggestedTime}</div>} */}
-      <RuleBuilder rules={rules} setRules={setRules} />
       <button
         type="submit"
         disabled={loading || !name.trim() || !message.trim() || !validateRules(rules)}

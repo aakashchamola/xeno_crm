@@ -29,8 +29,8 @@ export default function Layout({ children }) {
   const navLinks = [
     { href: '/campaigns/new', label: 'New Campaign' },
     { href: '/campaigns', label: 'Campaign History' },
-    { href: '/customers/new', label: 'Add Customer' },
-    { href: '/orders/new', label: 'Add Order' },
+    { href: '/customers', label: 'View Customers' },
+    { href: '/orders', label: 'View Orders' },
   ];
 
   return (
@@ -88,7 +88,14 @@ export default function Layout({ children }) {
               </nav>
             )}
             {/* User menu */}
-            <div className="user-menu" tabIndex={0} onBlur={() => setShowMenu(false)}>
+            <div
+              className="user-menu"
+              tabIndex={0}
+              onBlur={e => {
+                // Only close if focus moves outside the dropdown
+                if (!e.currentTarget.contains(e.relatedTarget)) setShowMenu(false);
+              }}
+            >
               <button
                 className="user-btn"
                 aria-label="User menu"
@@ -107,7 +114,12 @@ export default function Layout({ children }) {
               {showMenu && (
                 <ul className="user-dropdown" role="menu">
                   <li role="menuitem">
-                    <button onClick={handleLogout} className="logout-btn">Logout</button>
+                    <button
+                      onMouseDown={handleLogout}
+                      className="logout-btn"
+                    >
+                      Logout
+                    </button>
                   </li>
                 </ul>
               )}

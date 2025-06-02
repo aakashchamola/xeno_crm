@@ -22,7 +22,12 @@ function isValidCampaign(obj) {
   return obj && typeof obj.name === 'string' && typeof obj.message === 'string';
 }
 function isValidReceipt(obj) {
-  return obj && obj.campaign_id && obj.customer_id && obj.status;
+  // Accept both camelCase and snake_case for compatibility
+  return (
+    obj &&
+    ((obj.campaign_id && obj.customer_id) || (obj.campaignId && obj.customerId)) &&
+    obj.status
+  );
 }
 async function retryAsync(fn, retries = 3, delay = 500) {
   let lastErr;
@@ -125,25 +130,28 @@ async function start() {
           : [];
         if (customerIds.length === 0 && campaign.segmentRules) {
           const { clause, params } = buildWhereClause(campaign.segmentRules);
-          const [rows] = await pool.query(`SELECT id FROM customers WHERE ${clause}`, params);
-          customerIds = rows.map(r => r.id);
+          const [rows] = await pool.query(`SELECT customer_id FROM customers WHERE ${clause}`, params);
+          customerIds = rows.map(r => r.customer_id);
         }
 
         // 3. Insert communication_log and fan-out to vendor
         let sent = 0, failed = 0;
         for (const customer_id of customerIds) {
           try {
-            await saveCommunicationLog({ campaign_id, customer_id, message: campaign.message, status: 'sent' });
+     
             // Fan-out to vendor with retry
             await retryAsync(() => axios.post(VENDOR_API_URL, {
               campaignId: campaign_id,
               customerId: customer_id,
               message: campaign.message,
             }), 3, 500);
+            // Only log as 'sent' if vendor-simulator succeeded
+            await saveCommunicationLog({ campaign_id, customer_id, message: campaign.message, status: 'sent' });
             sent++;
           } catch (err) {
-            failed++;
+            // Log as 'failed' if vendor-simulator failed
             await saveCommunicationLog({ campaign_id, customer_id, message: campaign.message, status: 'failed' });
+            failed++;
             console.error('Vendor API or log failed:', err.message);
           }
         }

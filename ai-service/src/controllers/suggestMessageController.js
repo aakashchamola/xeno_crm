@@ -1,5 +1,4 @@
-// ai-service/src/controllers/suggestMessageController.js
-import { generateWithGemini } from '../utils/aiClient.js';
+import { generateWithGroq } from '../utils/aiClient.js';
 
 export async function suggestMessage(req, res) {
   const { segmentRules, campaignName } = req.body;
@@ -15,7 +14,7 @@ and engaging messages that are suitable for SMS but dont give any links or redir
   `.trim();
 
   try {
-    const raw = await generateWithGemini('gemini-2.0-flash', prompt);
+    const raw = await generateWithGroq(fullPrompt, 'llama-3.3-70b-versatile');
 
     // Try to pull out a JSON array
     const match = raw.match(/\[.*\]/s);
@@ -36,6 +35,9 @@ and engaging messages that are suitable for SMS but dont give any links or redir
     return res.json({ suggestions });
   } catch (err) {
     console.error('suggestMessage error:', err);
+    if (err.status === 503) {
+      return res.status(503).json({ error: 'AI is temporarily overloaded. Please try again later.' });
+    }
     return res.status(500).json({ error: 'Inference failed', details: err.message });
   }
 }

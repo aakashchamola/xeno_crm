@@ -11,6 +11,7 @@ The API Gateway is the main entry point for all backend REST APIs in the Xeno CR
 - **Request validation** using Joi
 - **Swagger UI** documentation at `/api-docs` (only service with Swagger)
 - **Publishes** all write operations to RabbitMQ queues for async processing
+- **Generates unique `customer_id`** for each customer (e.g., `CUST-<uuid>`, string)
 
 ---
 
@@ -66,6 +67,16 @@ The API Gateway will be available at [http://localhost:8002](http://localhost:80
 
 ---
 
+## Running with Docker
+
+This service is fully Dockerized. To run with Docker Compose (recommended for local dev):
+
+```bash
+docker-compose up --build
+```
+
+---
+
 ## Health Check
 
 - `GET /health` returns `{ status: 'ok' }` if the service is running.
@@ -103,6 +114,24 @@ curl -X POST http://localhost:8002/preview \
   -d '{"segmentRules": {"combinator": "and", "rules": [{"field": "spend", "op": ">", "value": 10000}]}}'
 ```
 
+### Example: Ingest Order
+
+```bash
+curl -X POST http://localhost:8002/orders \
+  -H "Authorization: Bearer <your_jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{"orderId":"ORD123","customerId":"CUST456","amount":1200.5,"date":"2024-05-27T10:00:00Z"}'
+```
+
+### Example: Delivery Receipt
+
+```bash
+curl -X POST http://localhost:8002/delivery-receipts \
+  -H "Authorization: Bearer <your_jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{"campaignId":"CMP123","customerId":"CUST456","status":"sent","timestamp":"2024-05-27T10:05:00Z"}'
+```
+
 ---
 
 ## Troubleshooting
@@ -111,5 +140,7 @@ curl -X POST http://localhost:8002/preview \
 - Use `npm start` in this directory to run the service standalone, or use Docker Compose for the full stack.
 - Logs will show connection errors and validation failures.
 - For JWT errors, ensure your Auth Service and API Gateway use the same `JWT_SECRET`.
+- For full stack orchestration, use Docker Compose as described above.
+- If you see DB errors about type mismatches, ensure your schema matches the latest `init.sql` (all customer references are strings).
 
 ---

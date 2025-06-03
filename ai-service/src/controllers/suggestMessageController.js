@@ -14,7 +14,7 @@ and engaging messages that are suitable for SMS but dont give any links or redir
   `.trim();
 
   try {
-    const raw = await generateWithGroq(fullPrompt, 'llama-3.3-70b-versatile');
+    const raw = await generateWithGroq(prompt, 'llama-3.3-70b-versatile');
 
     // Try to pull out a JSON array
     const match = raw.match(/\[.*\]/s);
